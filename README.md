@@ -1,6 +1,6 @@
 # petpdfprint
 Really simple doodad for someone on reddit (u/TalesFromTheBarkside - which is a solid username).
-They need a simple way to print PDFs a bit more effectively.
+They need a simple way to print PDFs a bit more effectively. <br />
 Download: https://github.com/mickeystix/petpdfprint/blob/34b50fa169cd7fce6feb53c1a37d0d7b4742d82d/dist/petprint.exe <br />
 Click the ellipsis in the top-right and choose to download.
 

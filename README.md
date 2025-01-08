@@ -5,7 +5,7 @@ Download: https://github.com/mickeystix/petpdfprint/blob/34b50fa169cd7fce6feb53c
 Click the ellipsis in the top-right and choose to download.
 
 Here is how to use this:<br />
-Step 1: Put all the potential files you might need to print into one folder. It doesn't matter where you put them, but I would say Desktop is best.<br />
+Step 1: Put all the potential files you might need to print into one folder. It doesn't matter where you put them, but I would say a folder on the Desktop is best.<br />
 Step 2: Download the .exe that is in the dist folder here<br />
 Step 3: Launch the .exe <br />
 Step 4: Click the "Browse" button and choose the folder you created in Step 1.<br />

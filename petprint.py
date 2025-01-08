@@ -1,6 +1,9 @@
+# Created by Mickey (https://github.com/mickeystix)
+# Free to use, edit, copy, whatever, I don't care - whatever license lets you do that, that's the one that covers this, sure, why not?
+
 import os
 import tkinter as tk
-from tkinter import ttk, filedialog, messagebox
+from tkinter import ttk, filedialog, messagebox # For GUI
 import fitz  # PyMuPDF
 import win32print  # For printing
 
@@ -96,7 +99,7 @@ def print_page(doc, page_number):
     printer_name = win32print.GetDefaultPrinter()
     page = doc[page_number - 1]
 
-    # Save the page as a temporary file
+    # Save the page as a temporary file, otherwise it gets weird about file access
     temp_path = os.path.join(os.getenv('TEMP'), f"temp_page_{page_number}.pdf")
     page_doc = fitz.open()
     page_doc.insert_pdf(doc, from_page=page_number - 1, to_page=page_number - 1)
@@ -121,7 +124,7 @@ def print_page(doc, page_number):
 
 # GUI setup
 root = tk.Tk()
-root.title("PDF Printer")
+root.title("PetPDFPrint")
 
 # Directory selection
 directory_frame = ttk.Frame(root)

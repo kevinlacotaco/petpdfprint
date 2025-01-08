@@ -1,6 +1,8 @@
 # petpdfprint
 Really simple doodad for someone on reddit (u/TalesFromTheBarkside - which is a solid username).
 They need a simple way to print PDFs a bit more effectively.
+Download: https://github.com/mickeystix/petpdfprint/blob/34b50fa169cd7fce6feb53c1a37d0d7b4742d82d/dist/petprint.exe <br />
+Click the ellipsis in the top-right and choose to download.
 
 Here is how to use this:<br />
 Step 1: Put all the potential files you might need to print into one folder. It doesn't matter where you put them, but I would say Desktop is best.<br />

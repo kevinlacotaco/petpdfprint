@@ -10,7 +10,7 @@ Step 2: Download the .exe that is in the dist folder here: https://github.com/mi
 Step 3: Launch the .exe <br />
 Step 4: Click the "Browse" button and choose the folder you created in Step 1.<br />
 Step 5: It should list the items contained in the folder<br />
-Step 6: Check the box next to whichever items you want to print. Next to the name it says the number of pages (if you are not seeing it, maybe rename your files)<br />
+Step 6: Check the box next to whichever items you want to print. Next to the name it says the number of pages (if you are not seeing it, maybe rename your files to something shorter - not sure how wide the window will want to get)<br />
 Step 7: If you need just specific pages, you can type the page/range into the text area next to the file name.<br />
 Step 8: Click Print Selected PDFs - this will print to your DEFAULT printer.<br />
 <br />

@@ -7,11 +7,13 @@ authors = [
 ]
 readme = "README.md"
 requires-python = ">=3.10"
-package-mode = false
 dependencies = [
     "pymupdf (>=1.25.1,<2.0.0)",
     "pycups (>=2.0.4,<3.0.0)",
 ]
+
+[tool.poetry]
+package-mode = false
 
 
 [build-system]

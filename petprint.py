@@ -4,151 +4,251 @@
 import os
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox # For GUI
+import tkinter.font as tkFont
 import fitz  # PyMuPDF
-import win32print  # For printing
+import cups 
+import tempfile
 
-def browse_directory():
-    """Opens a file dialog to select a directory."""
-    directory = filedialog.askdirectory()
-    if directory:
-        directory_var.set(directory)
-        update_pdf_list(directory)
+from typing import Callable
 
-def update_pdf_list(directory):
-    """Updates the list of PDFs in the selected directory."""
-    for widget in pdf_list_frame.winfo_children():
-        widget.destroy()
+class ScrollableFrame(ttk.Frame):
+    def __init__(self, master, *args, **kw):
+        ttk.Frame.__init__(self, master, *args, **kw)
 
-    for file in os.listdir(directory):
-        if file.lower().endswith('.pdf'):
-            pdf_path = os.path.join(directory, file)
+        vscrollbar = ttk.Scrollbar(self, orient=tk.VERTICAL)
+        vscrollbar.pack(fill=tk.Y, side=tk.RIGHT, expand=False)
+        canvas = tk.Canvas(self, bd=0, highlightthickness=0,
+                           yscrollcommand=vscrollbar.set)
+        canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        vscrollbar.config(command=canvas.yview)
+
+        canvas.xview_moveto(0)
+        canvas.yview_moveto(0)
+
+        self.content = ttk.Frame(canvas)
+        interior_id = canvas.create_window(0, 0, window=self.content,
+                                           anchor='nw')
+
+        def _configure_interior(event: None):
+            size = (self.content.winfo_reqwidth(), self.content.winfo_reqheight())
+            canvas.config(scrollregion="0 0 %s %s" % size)
+            if self.content.winfo_reqwidth() != canvas.winfo_width():
+                canvas.config(width=self.content.winfo_reqwidth())
+        self.content.bind('<Configure>', _configure_interior)
+
+        def _configure_canvas(event: None):
+            if self.content.winfo_reqwidth() != canvas.winfo_width():
+                canvas.itemconfigure(interior_id, width=canvas.winfo_width())
+        canvas.bind('<Configure>', _configure_canvas)
+
+
+class BrowseBar(tk.Frame):
+    def __init__(self, master, cb: Callable[[str], None]):
+        self.cur_directory = None
+        self.selected_dir_cb = cb
+
+        # Directory selection
+        directory_frame = ttk.Frame(master)
+        directory_frame.grid(row=0, column=0, sticky="NEW")
+
+        directory_label = ttk.Label(directory_frame, text="Directory:")
+        directory_label.pack(side=tk.LEFT, padx=5)
+
+        directory_var = tk.StringVar()
+        directory_entry = ttk.Entry(directory_frame, textvariable=directory_var, width=50)
+        directory_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=5)
+
+        browse_button = ttk.Button(directory_frame, text="Browse", command=self.browse_directory)
+        browse_button.pack(side=tk.LEFT, padx=5)
+
+    def browse_directory(self):
+        """Opens a file dialog to select a directory."""
+        directory = filedialog.askdirectory()
+        if directory:
+            self.cur_directory = directory
+            self.selected_dir_cb(directory)
+
+class ActionBar(tk.Frame):
+    def __init__(self, master, get_pdf_list: Callable[..., dict[str, str]]):
+        action_frame = tk.Frame(master)
+        action_frame.grid(row=2, column=0, sticky="NEW")
+
+        self._get_pdf_list = get_pdf_list
+
+        # Print button
+        print_button = ttk.Button(action_frame, text="Print Selected PDFs", command=self.print_selected_pdfs)
+        print_button.pack(pady=10, side=tk.BOTTOM, )
+    
+    def print_page(self, doc, page_number) -> None:
+        """Prints a single page from a PDF."""
+        conn = cups.Connection()
+        printers = conn.getPrinters()
+
+        firstPrinter = list(printers.keys())[0]
+
+        # Save the page as a temporary file, otherwise it gets weird about file access
+        with tempfile.NamedTemporaryFile() as fp:
+            page_doc = fitz.open()
+            page_doc.insert_pdf(doc, from_page=page_number - 1, to_page=page_number - 1)
+            page_doc.save(fp.name)
+            page_doc.close()
 
             try:
-                doc = fitz.open(pdf_path)
-                num_pages = len(doc)
-                doc.close()
+                conn.printFile(firstPrinter, fp.name, f"{doc}-{page_number}", {})
             except Exception as e:
-                num_pages = "Error"
+                messagebox.showerror("Unable to print", e) 
 
-            var = tk.BooleanVar()
-            checkboxes[file] = var
-            page_var = tk.StringVar()
-            page_entries[file] = page_var
 
-            pdf_frame = ttk.Frame(pdf_list_frame)
+    def print_selected_pdfs(self) -> None:
+        """Prints the selected PDFs with the specified page ranges."""
+        to_print: dict[str, list[int]] = self._get_pdf_list()
 
-            checkbox = ttk.Checkbutton(pdf_frame, variable=var)
-            checkbox.pack(side=tk.LEFT)
+        if len(to_print.keys()) == 0:
+            messagebox.showerror("Error", "Please select a pdfs.")
+            return
 
-            label = ttk.Label(pdf_frame, text=f"{file} ({num_pages} pages)")
-            label.pack(side=tk.LEFT, padx=5)
-
-            page_entry = ttk.Entry(pdf_frame, textvariable=page_var, width=15)
-            page_entry.pack(side=tk.RIGHT)
-
-            pdf_frame.pack(fill=tk.X, pady=2)
-
-def print_selected_pdfs():
-    """Prints the selected PDFs with the specified page ranges."""
-    directory = directory_var.get()
-    if not directory:
-        messagebox.showerror("Error", "Please select a directory.")
-        return
-
-    for file in os.listdir(directory):
-        if file in checkboxes and checkboxes[file].get():
-            pdf_path = os.path.join(directory, file)
-            page_range = page_entries[file].get()
-
+        for path, pages in to_print.items():
             try:
-                if not os.path.exists(pdf_path):
+                if not os.path.exists(path):
                     continue
 
-                doc = fitz.open(pdf_path)
-                pages = parse_page_range(page_range, len(doc))
+                doc = fitz.open(path)
 
                 for page in pages:
-                    print_page(doc, page)
+                    self.print_page(doc, page)
 
                 doc.close()
             except Exception as e:
-                messagebox.showerror("Error", f"Error printing {file}: {e}")
+                messagebox.showerror("Error", f"Error printing {path}: {e}")
 
-    messagebox.showinfo("Info", "Printing completed.")
+        messagebox.showinfo("Info", "Printing completed.")
 
-def parse_page_range(page_range, total_pages):
-    """Parses the page range and returns a list of pages to print."""
-    if not page_range:
-        return list(range(1, total_pages + 1))
+class PdfList(tk.Frame):
+    def __init__(self, master):
+        container = ttk.Frame(master)
+        self.master = master
+        self.pdfConfigurations: dict[str, tuple[tk.StringVar, tk.StringVar, int]] = dict();
 
-    pages = []
-    try:
-        for part in page_range.split(','):
-            if '-' in part:
-                start, end = map(int, part.split('-'))
-                pages.extend(range(start, end + 1))
-            else:
-                pages.append(int(part))
-    except ValueError:
-        raise ValueError("Invalid page range format.")
+        container.grid(row=1, column=0, sticky="NSEW")
 
-    return [p for p in pages if 1 <= p <= total_pages]
+        # PDF list
+        self.pdf_list_frame = ScrollableFrame(container)
+        self.pdf_list_frame.config(border=True, borderwidth=3)
 
-def print_page(doc, page_number):
-    """Prints a single page from a PDF."""
-    printer_name = win32print.GetDefaultPrinter()
-    page = doc[page_number - 1]
+        self.pdf_list_frame.pack(fill="both", expand=True)
 
-    # Save the page as a temporary file, otherwise it gets weird about file access
-    temp_path = os.path.join(os.getenv('TEMP'), f"temp_page_{page_number}.pdf")
-    page_doc = fitz.open()
-    page_doc.insert_pdf(doc, from_page=page_number - 1, to_page=page_number - 1)
-    page_doc.save(temp_path)
-    page_doc.close()
+    def parse_page_entry(self, page_range: str, total_pages: int) -> list[int]:
+        """Parses the page range and returns a list of pages to print."""
+        if not page_range:
+            return list(range(1, total_pages + 1))
 
-    # Use win32print to send the file to the printer
-    with open(temp_path, "rb") as temp_file:
-        raw_data = temp_file.read()
-        hprinter = win32print.OpenPrinter(printer_name)
+        pages = []
         try:
-            job = win32print.StartDocPrinter(hprinter, 1, (temp_path, None, "RAW"))
-            win32print.StartPagePrinter(hprinter)
-            win32print.WritePrinter(hprinter, raw_data)
-            win32print.EndPagePrinter(hprinter)
-            win32print.EndDocPrinter(hprinter)
-        finally:
-            win32print.ClosePrinter(hprinter)
+            for part in page_range.split(','):
+                if '-' in part:
+                    start, end = map(int, part.split('-'))
+                    pages.extend(range(start, end + 1))
+                else:
+                    pages.append(int(part))
+        except ValueError:
+            raise ValueError("Invalid page range format.")
 
-    # Remove the temporary file
-    os.remove(temp_path)
+        return [p for p in pages if 1 <= p <= total_pages]
 
-# GUI setup
-root = tk.Tk()
-root.title("PetPDFPrint")
 
-# Directory selection
-directory_frame = ttk.Frame(root)
-directory_frame.pack(fill=tk.X, padx=10, pady=10)
+    def get_selected_pdfs(self) -> dict[str, list[int]]:
+        selected_pdfs: dict[str, list[int]] = dict()
+        for file, [enabled, pageEntry, total_pages] in self.pdfConfigurations.items():
+            if enabled.get() == 'on':
+                selected_pdfs[file] = self.parse_page_entry(pageEntry.get(), total_pages)
 
-directory_label = ttk.Label(directory_frame, text="Directory:")
-directory_label.pack(side=tk.LEFT, padx=5)
+        return selected_pdfs
 
-directory_var = tk.StringVar()
-directory_entry = ttk.Entry(directory_frame, textvariable=directory_var, width=50)
-directory_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=5)
+    def update_listing(self, directory: str) -> None:
+        """Updates the list of PDFs in the selected directory."""
+        for widget in self.pdf_list_frame.interior.winfo_children():
+            widget.destroy()
 
-browse_button = ttk.Button(directory_frame, text="Browse", command=browse_directory)
-browse_button.pack(side=tk.LEFT, padx=5)
+        for file in os.listdir(directory):
 
-# PDF list
-pdf_list_frame = ttk.Frame(root)
-pdf_list_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+            if file.lower().endswith('.pdf'):
+                pdf_path = os.path.join(directory, file)
 
-checkboxes = {}
-page_entries = {}
+                try:
+                    doc = fitz.open(pdf_path)
+                    num_pages = len(doc)
+                    doc.close()
+                except Exception as e:
+                    num_pages = "Error"
 
-# Print button
-print_button = ttk.Button(root, text="Print Selected PDFs", command=print_selected_pdfs)
-print_button.pack(pady=10)
+                var = tk.StringVar(master=self.master, name=f"{file}-value", value="off")
+                
+                page_var = tk.StringVar()
 
-root.mainloop()
+                self.pdfConfigurations[pdf_path] = [var, page_var, num_pages]
+
+                pdf_frame = ttk.Frame(self.pdf_list_frame.interior)
+                pdf_frame.columnconfigure(1, weight=1)
+
+                checkbox = ttk.Checkbutton(pdf_frame, variable=var, offvalue="off", onvalue="on")
+ 
+                checkbox.grid(column=0, row=0)
+
+                file_label = ttk.Label(pdf_frame, text=file, justify='left', anchor='w')
+
+                file_label.grid(column=1, row=0, sticky='NSEW')
+
+                def fitLabel(event):
+                    label = event.widget
+                    if not hasattr(label, "original_text"):
+                        # preserve the original text so we can restore
+                        # it if the widget grows.
+                        label.original_text = label.cget("text")
+
+                    font = tkFont.nametofont("TkDefaultFont")
+                    text = label.original_text
+                    max_width = event.width
+                    actual_width = font.measure(text)
+                    if actual_width <= max_width:
+                        # the original text fits; no need to add ellipsis
+                        label.configure(text=text)
+                    else:
+                        # the original text won't fit. Keep shrinking
+                        # until it does
+                        while actual_width > max_width and len(text) > 1:
+                            text = text[:-1]
+                            actual_width = font.measure(text + "...")
+                        label.configure(text=text+"...")
+
+                #file_label.bind("<Configure>", fitLabel)
+                
+                page_label = ttk.Label(pdf_frame, text=f"({num_pages} pages)")
+                page_label.grid(column=2, row=0)
+
+                page_entry = ttk.Entry(pdf_frame, textvariable=page_var, width=15)
+                page_entry.grid(column=3, row=0)
+
+                pdf_frame.pack(fill=tk.X, pady=2)
+
+
+
+class MainApplication(tk.Frame):
+    def __init__(self, parent, *args, **kwargs):
+        tk.Frame.__init__(self, parent, *args, **kwargs)
+        self.parent = parent
+
+        self.columnconfigure(0, weight=1)
+        self.rowconfigure(1, weight=1)
+
+        self.browse_bar = BrowseBar(self, lambda dir:
+                                    self.pdf_list.update_listing(dir) )
+        self.pdf_list = PdfList(self)
+        self.action_bar = ActionBar(self, lambda: 
+                                    self.pdf_list.get_selected_pdfs())
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    root.title("PetPDFPrint")
+
+    MainApplication(root).pack(side="top", fill="both", expand=True)
+    root.mainloop()

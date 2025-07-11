@@ -19,7 +19,7 @@ jobs:
         python-version: '3.11'
 
     - name: Install
-      uses: ./github/actions/install-env
+      uses: ./.github/actions/install-env
 
     - name: Create Executable
       uses: sayyid5416/pyinstaller@v1

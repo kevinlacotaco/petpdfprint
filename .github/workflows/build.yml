@@ -29,6 +29,9 @@ jobs:
     - name: Install
       uses: ./.github/actions/install-env
 
+    - name: Install pyinstaller
+      run: pip install pyinstaller
+
     - name: Create Executable
       run: pyinstaller petprint.py
 

@@ -85,6 +85,21 @@ class ScrollableFrame(ttk.Frame):
                 canvas.itemconfigure(interior_id, width=canvas.winfo_width())
         canvas.bind('<Configure>', _configure_canvas)
 
+        def _on_mousewheel(event):
+            print(event.delta)
+            scroll_amount = 0
+
+            if event.num == 5 or event.delta == -120:
+                scroll_amount = 1
+            if event.num == 4 or event.delta == 120:
+                scroll_amount = -1
+            
+            canvas.yview_scroll(scroll_amount, 'units')
+        canvas.bind_all('<MouseWheel>', _on_mousewheel)
+        canvas.bind_all('<Button-4>', _on_mousewheel)
+        canvas.bind_all('<Button-5>', _on_mousewheel)
+
+
 
 class BrowseBar(tk.Frame):
     def __init__(self, master, cb: Callable[[str], None]):

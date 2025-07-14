@@ -34,4 +34,4 @@ jobs:
       with:
         python_ver: '3.11'
         spec: 'petprint.py'
-        upload_exe_with_name: 'petprint-${ matrix.os }}'
+        upload_exe_with_name: "petprint-${ matrix.os }}"

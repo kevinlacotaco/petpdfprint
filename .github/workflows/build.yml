@@ -36,6 +36,12 @@ jobs:
 
     - name: Activate shell
       shell: bash
+      if: matrix.os == 'ubuntu-latest' | matrix.os == 'macos-latest'
+      run: eval $(poetry env activate)
+
+    - name: Activate shell (windows)
+      shell: bash
+      if: matrix.os == 'windows-latest'
       run: eval . $(poetry env activate)
 
     - name: Install dependencies

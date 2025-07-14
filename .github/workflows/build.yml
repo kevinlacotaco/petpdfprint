@@ -35,8 +35,9 @@ jobs:
         virtualenvs-path: .venv
 
     - name: Activate shell
-      run: poetry shell
-      
+      shell: bash
+      run: eval $(poetry env activate)
+
     - name: Install dependencies
       shell: bash
       run: poetry install --no-interaction

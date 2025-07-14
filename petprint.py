@@ -166,7 +166,7 @@ class PdfList(tk.Frame):
 
     def update_listing(self, directory: str) -> None:
         """Updates the list of PDFs in the selected directory."""
-        for widget in self.pdf_list_frame.interior.winfo_children():
+        for widget in self.pdf_list_frame.content.winfo_children():
             widget.destroy()
 
         for file in os.listdir(directory):
@@ -187,7 +187,7 @@ class PdfList(tk.Frame):
 
                 self.pdfConfigurations[pdf_path] = [var, page_var, num_pages]
 
-                pdf_frame = ttk.Frame(self.pdf_list_frame.interior)
+                pdf_frame = ttk.Frame(self.pdf_list_frame.content)
                 pdf_frame.columnconfigure(1, weight=1)
 
                 checkbox = ttk.Checkbutton(pdf_frame, variable=var, offvalue="off", onvalue="on")

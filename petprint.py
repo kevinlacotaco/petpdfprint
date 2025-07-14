@@ -5,16 +5,16 @@ import os
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox # For GUI
 import tkinter.font as tkFont
-import fitz  # PyMuPDF
+import fitz # type: ignore
 import tempfile
 import platform
 
-from typing import Callable
+from typing import Any, Callable
 
-def print_to_default_printer(path: str):
+def print_to_default_printer(path: str) -> None:
 
     if platform.system() == 'Darwin':
-        import cups
+        import cups # type: ignore
 
         conn = cups.Connection()
         printers = conn.getPrinters()
@@ -24,9 +24,9 @@ def print_to_default_printer(path: str):
         try:
             conn.printFile(firstPrinter, path, f"Print {path}", {})
         except Exception as e:
-            messagebox.showerror("Unable to print", e) 
+            messagebox.showerror("Unable to print", str(e)) 
     elif platform.system() == 'Windows':
-        import win32print
+        import win32print # type: ignore
 
         printer_name = win32print.GetDefaultPrinter()
         hprinter = win32print.OpenPrinter(printer_name)
@@ -50,13 +50,13 @@ def print_to_default_printer(path: str):
         try:
             conn.printFile(firstPrinter, path, f"Print {path}", {})
         except Exception as e:
-            messagebox.showerror("Unable to print", e) 
+            messagebox.showerror("Unable to print", str(e)) 
         
 
     return None
 
 class ScrollableFrame(ttk.Frame):
-    def __init__(self, master, *args, **kw):
+    def __init__(self, master: tk.Widget, *args: None, **kw: Any):
         ttk.Frame.__init__(self, master, *args, **kw)
 
         vscrollbar = ttk.Scrollbar(self, orient=tk.VERTICAL)
@@ -73,19 +73,19 @@ class ScrollableFrame(ttk.Frame):
         interior_id = canvas.create_window(0, 0, window=self.content,
                                            anchor='nw')
 
-        def _configure_interior(event: None):
+        def _configure_interior(event: tk.Event) -> None:
             size = (self.content.winfo_reqwidth(), self.content.winfo_reqheight())
-            canvas.config(scrollregion="0 0 %s %s" % size)
+            canvas.config(scrollregion=(0, 0, size[0], size[1]))
             if self.content.winfo_reqwidth() != canvas.winfo_width():
                 canvas.config(width=self.content.winfo_reqwidth())
         self.content.bind('<Configure>', _configure_interior)
 
-        def _configure_canvas(event: None):
+        def _configure_canvas(event: tk.Event) -> None:
             if self.content.winfo_reqwidth() != canvas.winfo_width():
                 canvas.itemconfigure(interior_id, width=canvas.winfo_width())
         canvas.bind('<Configure>', _configure_canvas)
 
-        def _on_mousewheel(event):
+        def _on_mousewheel(event: tk.Event) -> None:
             print(event.delta)
             scroll_amount = 0
 
@@ -102,8 +102,8 @@ class ScrollableFrame(ttk.Frame):
 
 
 class BrowseBar(tk.Frame):
-    def __init__(self, master, cb: Callable[[str], None]):
-        self.cur_directory = None
+    def __init__(self, master: tk.Widget, cb: Callable[[str], None]):
+        self.cur_directory: str | None = None
         self.selected_dir_cb = cb
 
         # Directory selection
@@ -120,7 +120,7 @@ class BrowseBar(tk.Frame):
         browse_button = ttk.Button(directory_frame, text="Browse", command=self.browse_directory)
         browse_button.pack(side=tk.LEFT, padx=5)
 
-    def browse_directory(self):
+    def browse_directory(self) -> None:
         """Opens a file dialog to select a directory."""
         directory = filedialog.askdirectory()
         if directory:
@@ -128,7 +128,7 @@ class BrowseBar(tk.Frame):
             self.selected_dir_cb(directory)
 
 class ActionBar(tk.Frame):
-    def __init__(self, master, get_pdf_list: Callable[..., dict[str, str]]):
+    def __init__(self, master: tk.Widget, get_pdf_list: Callable[..., dict[str, list[int]]]):
         action_frame = tk.Frame(master)
         action_frame.grid(row=2, column=0, sticky="NEW")
 
@@ -169,7 +169,7 @@ class ActionBar(tk.Frame):
         messagebox.showinfo("Info", "Printing completed.")
 
 class PdfList(tk.Frame):
-    def __init__(self, master):
+    def __init__(self, master: tk.Widget):
         container = ttk.Frame(master)
         self.master = master
         self.pdfConfigurations: dict[str, tuple[tk.StringVar, tk.StringVar, int]] = dict();
@@ -187,7 +187,7 @@ class PdfList(tk.Frame):
         if not page_range:
             return list(range(1, total_pages + 1))
 
-        pages = []
+        pages: list[int] = []
         try:
             for part in page_range.split(','):
                 if '-' in part:
@@ -224,13 +224,13 @@ class PdfList(tk.Frame):
                     num_pages = len(doc)
                     doc.close()
                 except Exception as e:
-                    num_pages = "Error"
+                    raise e
 
                 var = tk.StringVar(master=self.master, name=f"{file}-value", value="off")
                 
                 page_var = tk.StringVar()
 
-                self.pdfConfigurations[pdf_path] = [var, page_var, num_pages]
+                self.pdfConfigurations[pdf_path] = (var, page_var, num_pages)
 
                 pdf_frame = ttk.Frame(self.pdf_list_frame.content)
                 pdf_frame.columnconfigure(1, weight=1)
@@ -243,7 +243,7 @@ class PdfList(tk.Frame):
 
                 file_label.grid(column=1, row=0, sticky='NSEW')
 
-                def fitLabel(event):
+                def fitLabel(event: tk.Event) -> None:
                     label = event.widget
                     if not hasattr(label, "original_text"):
                         # preserve the original text so we can restore
@@ -278,7 +278,7 @@ class PdfList(tk.Frame):
 
 
 class MainApplication(tk.Frame):
-    def __init__(self, parent, *args, **kwargs):
+    def __init__(self, parent: tk.Widget | tk.Tk, *args: None, **kwargs: Any):
         tk.Frame.__init__(self, parent, *args, **kwargs)
         self.parent = parent
 

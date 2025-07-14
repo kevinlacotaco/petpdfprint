@@ -2,14 +2,14 @@
 # Free to use, edit, copy, whatever, I don't care - whatever license lets you do that, that's the one that covers this, sure, why not?
 
 import os
-import tkinter as tk
-from tkinter import ttk, filedialog, messagebox  # For GUI
-import tkinter.font as tkFont
-import fitz  # type: ignore
-import tempfile
 import platform
-
+import tempfile
+import tkinter as tk
+import tkinter.font as tkFont
+from tkinter import filedialog, messagebox, ttk  # For GUI
 from typing import Any, Callable
+
+import fitz  # type: ignore
 
 
 def print_to_default_printer(path: str) -> None:

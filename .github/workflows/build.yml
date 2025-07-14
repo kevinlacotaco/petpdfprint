@@ -30,8 +30,10 @@ jobs:
       uses: ./.github/actions/install-env
 
     - name: Create Executable
-      uses: sayyid5416/pyinstaller@v1
+      run: pyinstaller petprint.py
+
+    - name: Upload Executable
+      uses: actions/upload-artifact@v4
       with:
-        python_ver: '3.11'
-        spec: 'petprint.py'
-        upload_exe_with_name: "petprint-${ matrix.os }}"
+        name: ${{ matrix.os }}-artifact
+        path: dist/*

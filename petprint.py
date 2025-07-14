@@ -6,10 +6,54 @@ import tkinter as tk
 from tkinter import ttk, filedialog, messagebox # For GUI
 import tkinter.font as tkFont
 import fitz  # PyMuPDF
-import cups 
 import tempfile
+import platform
 
 from typing import Callable
+
+def print_to_default_printer(path: str):
+
+    if platform.system() == 'Darwin':
+        import cups
+
+        conn = cups.Connection()
+        printers = conn.getPrinters()
+
+        firstPrinter = list(printers.keys())[0]
+
+        try:
+            conn.printFile(firstPrinter, path, f"Print {path}", {})
+        except Exception as e:
+            messagebox.showerror("Unable to print", e) 
+    elif platform.system() == 'Windows':
+        import win32print
+
+        printer_name = win32print.GetDefaultPrinter()
+        hprinter = win32print.OpenPrinter(printer_name)
+
+        try:
+            job = win32print.StartDocPrinter(hprinter, 1, (path, None, "RAW"))
+            win32print.StartPagePrinter(hprinter)
+            win32print.WritePrinter(hprinter, path)
+            win32print.EndPagePrinter(hprinter)
+            win32print.EndDocPrinter(hprinter)
+        finally:
+            win32print.ClosePrinter(hprinter)
+    elif platform.system() == 'Linux':
+        import cups
+
+        conn = cups.Connection()
+        printers = conn.getPrinters()
+
+        firstPrinter = list(printers.keys())[0]
+
+        try:
+            conn.printFile(firstPrinter, path, f"Print {path}", {})
+        except Exception as e:
+            messagebox.showerror("Unable to print", e) 
+        
+
+    return None
 
 class ScrollableFrame(ttk.Frame):
     def __init__(self, master, *args, **kw):
@@ -78,26 +122,6 @@ class ActionBar(tk.Frame):
         # Print button
         print_button = ttk.Button(action_frame, text="Print Selected PDFs", command=self.print_selected_pdfs)
         print_button.pack(pady=10, side=tk.BOTTOM, )
-    
-    def print_page(self, doc, page_number) -> None:
-        """Prints a single page from a PDF."""
-        conn = cups.Connection()
-        printers = conn.getPrinters()
-
-        firstPrinter = list(printers.keys())[0]
-
-        # Save the page as a temporary file, otherwise it gets weird about file access
-        with tempfile.NamedTemporaryFile() as fp:
-            page_doc = fitz.open()
-            page_doc.insert_pdf(doc, from_page=page_number - 1, to_page=page_number - 1)
-            page_doc.save(fp.name)
-            page_doc.close()
-
-            try:
-                conn.printFile(firstPrinter, fp.name, f"{doc}-{page_number}", {})
-            except Exception as e:
-                messagebox.showerror("Unable to print", e) 
-
 
     def print_selected_pdfs(self) -> None:
         """Prints the selected PDFs with the specified page ranges."""
@@ -106,20 +130,26 @@ class ActionBar(tk.Frame):
         if len(to_print.keys()) == 0:
             messagebox.showerror("Error", "Please select a pdfs.")
             return
+        
+        with tempfile.NamedTemporaryFile(delete=False) as fp:
+            page_doc = fitz.open()
 
-        for path, pages in to_print.items():
-            try:
+            for path, pages in to_print.items():
                 if not os.path.exists(path):
                     continue
 
                 doc = fitz.open(path)
 
                 for page in pages:
-                    self.print_page(doc, page)
+                    page_doc.insert_pdf(doc, from_page=page - 1, to_page=page - 1)
 
                 doc.close()
-            except Exception as e:
-                messagebox.showerror("Error", f"Error printing {path}: {e}")
+
+            page_doc.save(fp.name)
+            page_doc.close()
+
+            print_to_default_printer(fp.name)
+
 
         messagebox.showinfo("Info", "Printing completed.")
 

@@ -8,7 +8,11 @@ jobs:
 
   build:
 
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    
+    runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v4
@@ -19,6 +23,7 @@ jobs:
         python-version: '3.11'
       
     - name: Install Pre-reqs
+      if: ${{ matrix.os }} == 'ubuntu-latest' || ${{ matrix.os }} == 'macos-latest'
       run: sudo apt-get install libcups2-dev python3-dev gcc python3-setuptools
 
     - name: Install

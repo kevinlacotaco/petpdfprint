@@ -33,7 +33,7 @@ def print_to_default_printer(path: str) -> None:
         hprinter = win32print.OpenPrinter(printer_name)
 
         try:
-            job = win32print.StartDocPrinter(hprinter, 1, (path, None, "RAW"))
+            win32print.StartDocPrinter(hprinter, 1, (path, None, "RAW"))
             win32print.StartPagePrinter(hprinter)
             win32print.WritePrinter(hprinter, path)
             win32print.EndPagePrinter(hprinter)

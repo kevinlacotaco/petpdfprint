@@ -69,8 +69,8 @@ jobs:
       - name: Download Artifacts
         uses: actions/download-artifact@v4
 
-      - name: Zip app bundle
-        run: zip -r macos-latest-artifact/macos-bundle.zip macos-latest-artifact/**/**/petprint.app
+      - name: Compress app bundle
+        run: tar -czvf macos-bundle.tar.gz -C macos-latest-artifact/pyinstaller/macosx_14_0_arm64 petprint.app
 
       - name: Publish
         uses: softprops/action-gh-release@v2
@@ -80,5 +80,5 @@ jobs:
           tag_name: dev
           files: |
             windows-latest-artifact/**/**/petprint.exe
-            macos-latest-artifact/**/**/macos-bundle.zip
+            macos-latest-artifact/**/**/macos-bundle.tar.gz
             ubuntu-latest-artifact/**/**/petprint

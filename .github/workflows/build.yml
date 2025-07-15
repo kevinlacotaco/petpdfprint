@@ -69,6 +69,9 @@ jobs:
       - name: Download Artifacts
         uses: actions/download-artifact@v4
 
+      - name: Make Executable
+        run: chmod +x macos-latest-artifact/**/**/petprint
+
       - name: Compress app bundle
         run: tar -czvf macos-latest-artifact/macos-bundle.tar.gz -C macos-latest-artifact/pyinstaller/macosx_14_0_arm64 petprint.app
 

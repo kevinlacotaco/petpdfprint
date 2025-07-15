@@ -53,6 +53,7 @@ jobs:
       run: poetry self add poetry-pyinstaller-plugin
 
     - name: Create Executable
+      shell: bash
       run: poetry build
 
     - name: Upload Executable

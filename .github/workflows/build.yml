@@ -70,7 +70,7 @@ jobs:
         uses: actions/download-artifact@v4
 
       - name: Compress app bundle
-        run: tar -czvf macos-bundle.tar.gz -C macos-latest-artifact/pyinstaller/macosx_14_0_arm64 petprint.app
+        run: tar -czvf macos-latest-artifact/macos-bundle.tar.gz -C macos-latest-artifact/pyinstaller/macosx_14_0_arm64 petprint.app
 
       - name: Publish
         uses: softprops/action-gh-release@v2

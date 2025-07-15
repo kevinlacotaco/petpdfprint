@@ -49,6 +49,7 @@ jobs:
       run: poetry install --no-interaction
 
     - name: Install pyinstaller plugin
+      shell: bash
       run: poetry self add poetry-pyinstaller-plugin
 
     - name: Create Executable

@@ -74,6 +74,7 @@ jobs:
         with:
           prerelease: true
           name: Latest Dev
+          tag_name: dev
           files: |
             **/**/petprint.exe
             **/**/petprint.app

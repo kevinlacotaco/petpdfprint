@@ -70,7 +70,7 @@ jobs:
         uses: actions/download-artifact@v4
 
       - name: List dirs
-        run: ls -la macos-latest-artifact/**/petprint
+        run: ls -R
 
       - name: Make Executable
         run: chmod +x macos-latest-artifact/**/petprint

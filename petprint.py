@@ -3,6 +3,7 @@
 
 import os
 import platform
+import subprocess
 import tempfile
 import tkinter as tk
 import tkinter.font as tkFont
@@ -150,8 +151,52 @@ class ActionBar(tk.Frame):
         )
         print_button.pack(
             pady=10,
-            side=tk.BOTTOM,
+            padx=10,
+            side=tk.LEFT,
         )
+
+        # Save button
+        save_button = ttk.Button(
+            action_frame, text="Save to combined PDF", command=self.print_to_pdf
+        )
+        save_button.pack(pady=10, padx=10, side=tk.RIGHT)
+
+    def print_to_pdf(self) -> None:
+        """Prints the selected PDFs with the specified page ranges to temp document without printer."""
+        to_print: dict[str, list[int]] = self._get_pdf_list()
+
+        if len(to_print.keys()) == 0:
+            messagebox.showerror("Error", "Please select a pdfs.")
+            return
+
+        with tempfile.NamedTemporaryFile(delete=False) as fp:
+            page_doc = fitz.open()
+
+            for index, (path, pages) in reversed(list(enumerate(to_print.items()))):
+                if not os.path.exists(path):
+                    continue
+
+                doc = fitz.open(path)
+
+                for page in pages:
+                    page_doc.insert_pdf(doc, from_page=page - 1, to_page=page - 1)
+
+                if len(pages) % 2 == 1 and index != 0:
+                    page_doc.new_page(-1)
+
+                doc.close()
+
+            page_doc.save(fp.name)
+            page_doc.close()
+
+            if platform.system() == "Darwin":  # macOS
+                subprocess.call(("open", fp.name))
+            elif platform.system() == "Windows":  # Windows
+                os.startfile(fp.name)  # type: ignore
+            else:  # linux variants
+                subprocess.call(("xdg-open", fp.name))
+
+        messagebox.showinfo("Info", "Printing completed.")
 
     def print_selected_pdfs(self) -> None:
         """Prints the selected PDFs with the specified page ranges."""
@@ -164,7 +209,7 @@ class ActionBar(tk.Frame):
         with tempfile.NamedTemporaryFile(delete=False) as fp:
             page_doc = fitz.open()
 
-            for path, pages in to_print.items():
+            for index, (path, pages) in reversed(list(enumerate(to_print.items()))):
                 if not os.path.exists(path):
                     continue
 
@@ -172,6 +217,9 @@ class ActionBar(tk.Frame):
 
                 for page in pages:
                     page_doc.insert_pdf(doc, from_page=page - 1, to_page=page - 1)
+
+                if len(pages) % 2 == 1 and index != 0:
+                    page_doc.new_page(-1)
 
                 doc.close()
 

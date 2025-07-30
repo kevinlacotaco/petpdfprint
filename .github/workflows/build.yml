@@ -10,7 +10,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest, macos-13]
     
     runs-on: ${{ matrix.os }}
 
@@ -36,7 +36,7 @@ jobs:
 
     - name: Activate shell
       shell: bash
-      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
+      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest' || matrix.os == 'macos-13'
       run: eval $(poetry env activate)
 
     - name: Activate shell (windows)
@@ -72,11 +72,17 @@ jobs:
       - name: List dirs
         run: ls -R
 
-      - name: Make Executable
+      - name: Make Executable (macos-latest)
         run: chmod +x macos-latest-artifact/pyinstaller/macosx_14_0_arm64/petprint.app/Contents/MacOS/petprint
 
-      - name: Compress app bundle
+      - name: Compress app bundle (macos-latest)
         run: tar -czvf macos-latest-artifact/macos-bundle.tar.gz -C macos-latest-artifact/pyinstaller/macosx_14_0_arm64 petprint.app
+
+      - name: Make Executable (macos-13)
+        run: chmod +x macos-13-artifact/pyinstaller/macosx_13_0_x86/petprint.app/Contents/MacOS/petprint
+
+      - name: Compress app bundle (macos-13)
+        run: tar -czvf macos-13-artifact/macos-bundle.tar.gz -C macos-latest-artifact/pyinstaller/macosx_13_0_x86 petprint.app
 
       - name: Publish
         uses: softprops/action-gh-release@v2

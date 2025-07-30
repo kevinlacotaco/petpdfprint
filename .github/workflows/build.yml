@@ -82,7 +82,7 @@ jobs:
         run: chmod +x macos-13-artifact/pyinstaller/macosx_13_0_x86_64/petprint.app/Contents/MacOS/petprint
 
       - name: Compress app bundle (macos-13)
-        run: tar -czvf macos-13-artifact/macos-bundle-intel.tar.gz -C macos-latest-artifact/pyinstaller/macosx_13_0_x86_64 petprint.app
+        run: tar -czvf macos-13-artifact/macos-bundle-intel.tar.gz -C macos-13-artifact/pyinstaller/macosx_13_0_x86_64 petprint.app
 
       - name: Publish
         uses: softprops/action-gh-release@v2

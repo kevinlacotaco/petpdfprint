@@ -79,10 +79,10 @@ jobs:
         run: tar -czvf macos-latest-artifact/macos-bundle.tar.gz -C macos-latest-artifact/pyinstaller/macosx_14_0_arm64 petprint.app
 
       - name: Make Executable (macos-13)
-        run: chmod +x macos-13-artifact/pyinstaller/macosx_13_0_x86/petprint.app/Contents/MacOS/petprint
+        run: chmod +x macos-13-artifact/pyinstaller/macosx_13_0_x86_64/petprint.app/Contents/MacOS/petprint
 
       - name: Compress app bundle (macos-13)
-        run: tar -czvf macos-13-artifact/macos-bundle.tar.gz -C macos-latest-artifact/pyinstaller/macosx_13_0_x86 petprint.app
+        run: tar -czvf macos-13-artifact/macos-bundle-intel.tar.gz -C macos-latest-artifact/pyinstaller/macosx_13_0_x86_64 petprint.app
 
       - name: Publish
         uses: softprops/action-gh-release@v2
@@ -93,4 +93,5 @@ jobs:
           files: |
             windows-latest-artifact/**/**/petprint.exe
             macos-latest-artifact/**/**/macos-bundle.tar.gz
+            macos-13-artifact/**/**/macos-bundle-intel.tar.gz
             ubuntu-latest-artifact/**/**/petprint
